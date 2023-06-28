@@ -8,6 +8,7 @@ import { PaginationDTO } from 'src/common/dtos/pagination.dto';
 import { validate as isUUID } from 'uuid';
 import { ProductImage } from './entities';
 import { FilesService } from 'src/files/files.service';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -28,7 +29,7 @@ export class ProductsService {
 
   ){}
 
-  async create(createProductDto: CreateProductDto, files?: Array<Express.Multer.File>) {
+  async create(createProductDto: CreateProductDto, user: User, files?: Array<Express.Multer.File>) {
     try {
       if(files && files.length){
         const { secureUrls } = this.filesService.returnSecurityUrls(files);
@@ -40,6 +41,7 @@ export class ProductsService {
       const { images = [], ...productDetails } = createProductDto;
       const product = this.productRepository.create({
         ...productDetails,
+        user,
         images: images.map( image => this.productImagerepository.create({ url: image }))
       });
       await this.productRepository.save(product);
@@ -96,7 +98,9 @@ export class ProductsService {
   async update(
     id: string, 
     updateProductDto: UpdateProductDto,  
-    files?: Array<Express.Multer.File>) 
+    user: User,
+    files?: Array<Express.Multer.File>
+    ) 
   {
     if(files && files.length){
       const { secureUrls } = this.filesService.returnSecurityUrls(files);
@@ -138,7 +142,7 @@ export class ProductsService {
         
         product.images = images.map(image => this.productImagerepository.create({url: image}))
       }
-
+      product.user = user;
       await queryRunner.manager.save( product );
 
       if (imagesFind) {

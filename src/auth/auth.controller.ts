@@ -1,12 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Headers, SetMetadata } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginUserDto, CreateUserDto } from './dto/index';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from './entities/user.entity';
-import { GetRawHeaders, GetUser } from './decorators/index';
+import { Auth, GetRawHeaders, GetUser, RoleProtected } from './decorators/index';
 import { IncomingHttpHeaders } from 'http';
 import { UserRoleGuard } from './guards/user-role/user-role.guard';
-import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces';
 
 
@@ -24,10 +23,14 @@ export class AuthController {
     return this.authService.loginUser(loginUserDto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @Get('check-status')
+  @Auth()
+  checkAuthStatus(
+    @GetUser() user: User,
+  ) {
+    return this.authService.checkAuthStatus(user);
   }
+
 
   @Get('private')
   @UseGuards( AuthGuard() )
@@ -63,18 +66,17 @@ export class AuthController {
     }
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
+    // @SetMetadata('roles', ['admin', 'superuser'])
+    @Get('private3')
+    @Auth(ValidRoles.superUser, ValidRoles.admin)
+    privateRoute3(
+      @GetUser() user: User
+    ){
+      return {
+        ok: true,
+        user
+      }
+    }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: any) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
-  }
+ 
 }

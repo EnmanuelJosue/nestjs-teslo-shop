@@ -46,7 +46,6 @@ export class AuthService {
     const matchPassword = bcrypt.compareSync(password, user.password);
 
     if (matchPassword) {
-      delete user.id;
       delete user.password;
       return {
         ...user,
@@ -57,26 +56,19 @@ export class AuthService {
     throw new UnauthorizedException("User or password doesnt match")
   }
 
+  checkAuthStatus(user: User){
+    return {
+      ...user,
+      token: this.getJwtToken({ id: user.id })
+    }
+  }
+
   private getJwtToken( payload: JwtPayload){
     const token = this.jwtService.sign( payload );
     return token;
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: any) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
+ 
 
   private handleDBerrors(error: any): never {
     if (error.code === '23505') throw new BadRequestException(error.detail)

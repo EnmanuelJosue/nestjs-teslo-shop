@@ -6,18 +6,23 @@ import { PaginationDTO } from 'src/common/dtos/pagination.dto';
 
 import { uploadProductImages } from 'src/files/helpers/index';
 import { FilesService } from 'src/files/files.service';
+import { Auth, GetUser } from 'src/auth/decorators';
+import { ValidRoles } from 'src/auth/interfaces';
+import { User } from 'src/auth/entities/user.entity';
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService, private readonly filesService: FilesService) {}
 
   @Post()
+  @Auth(ValidRoles.admin)
   @UseInterceptors(uploadProductImages('images'))
   create(
     @UploadedFiles() images: Array<Express.Multer.File>, 
-    @Body() createProductDto: CreateProductDto
+    @Body() createProductDto: CreateProductDto,
+    @GetUser() user: User
   ) {
-    return this.productsService.create(createProductDto, images);
+    return this.productsService.create(createProductDto, user, images);
   }
 
   @Get()
@@ -33,16 +38,20 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @Auth(ValidRoles.admin)
   @UseInterceptors(uploadProductImages('images'))
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFiles() images: Array<Express.Multer.File>,
-    @Body() updateProductDto: UpdateProductDto) 
+    @Body() updateProductDto: UpdateProductDto,
+    @GetUser() user: User
+    )
     {
-      return this.productsService.update(id, updateProductDto, images);
+      return this.productsService.update(id, updateProductDto, user, images);
   }
 
   @Delete(':id')
+  @Auth(ValidRoles.admin)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.remove(id);
   }
