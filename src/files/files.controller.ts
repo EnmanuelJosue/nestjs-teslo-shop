@@ -9,7 +9,10 @@ import { ConfigService } from '@nestjs/config';
 import { FilesService } from './files.service';
 import { fileFilter, fileNamer } from './helpers/index';
 import { uploadProductImages } from './helpers/filesInterceptor.helper';
+import { ApiBody, ApiConsumes, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FileUploadDto, FilesUploadDto} from './dto/index';
 
+@ApiTags('Files')
 @Controller('files')
 export class FilesController {
   constructor(
@@ -25,7 +28,14 @@ export class FilesController {
       destination: './static/products',
       filename: fileNamer
     })
-  }) )
+  }))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Product image file',
+    type: FileUploadDto,
+  })
+  @ApiResponse({status: 201, description: 'Files was created'})
+  @ApiResponse({status: 400, description: 'File o files is required, only accepted images'})
   uploadProductImage(
     @UploadedFile() 
     file: Express.Multer.File
@@ -42,6 +52,11 @@ export class FilesController {
 
   @Post('product/images')
   @UseInterceptors(uploadProductImages('files'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Product image files',
+    type: FilesUploadDto,
+  })
   uploadProductImages(
     @UploadedFiles() 
     files: Array<Express.Multer.File>
@@ -52,6 +67,7 @@ export class FilesController {
 
 
   @Get('product/:imageName')
+  @ApiResponse({status: 200, description: 'Get imagen for product'})
   findProductImage(
     @Res() res: Response,
     @Param('imageName') imageName: string
@@ -61,6 +77,7 @@ export class FilesController {
   }
 
   @Delete('image/:image')
+  @ApiResponse({status: 200, description: 'Delete image for product'})
   deleteImage(
     @Param('image') imageName: string
   ){
